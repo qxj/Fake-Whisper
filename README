@@ -1,0 +1,6 @@
+Installation:
+
+1. Rename whisper.conf.sample to whisper.conf, and setup gmail and
+   instapaper login accounts.
+2. Run whisper.py in crontab.
+3. Run index.php as a web service.

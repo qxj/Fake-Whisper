@@ -1,0 +1,18 @@
+21:55:41.919658 IP jqian-laptop.lan.42556 > www5.instapaper.com.www: Flags [R], seq 2303404987, win 0, length 0
+E..(..@.@............<.P.K+.....P.......
+21:55:42.522804 IP www5.instapaper.com.www > jqian-laptop.lan.42555: Flags [.], seq 1:907, ack 754, win 58, options [nop,nop,TS val 1168272193 ecr 10242886], length 906
+E....r@.8............P.;v..........:0......
+E.kA..KFHTTP/1.1 200 OK
+Date: Mon, 29 Aug 2011 13:55:30 GMT
+Server: Apache
+P3P: CP="ALL ADM DEV PSAi COM OUR OTRo STP IND ONL"
+Content-Disposition: attachment; filename="Instapaper-2011-08-29.mobi"
+Vary: Accept-Encoding
+Content-Encoding: gzip
+Connection: close
+Transfer-Encoding: chunked
+Content-Type: application/x-mobipocket-ebook
+
+1faa
+............{\Tu.?..`a....b........9#*...V....."*!....Y-.6......e..........
+.m)m..v1KQ..n.....>h{.|>......3.....a.y....z>_..y...J.r.s..J$...............-Ofe.e.I.0..K$G^..A..FAL.H..
