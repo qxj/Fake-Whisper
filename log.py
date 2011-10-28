@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# log.py --- Time-stamp: <2010-07-08 12:47:58 Thursday by julian>
+# log.py --- Time-stamp: <Qian Julian 2011-10-28 22:48:38>
 # Copyright 2010 Julian Qian
 # Author: julian@PDDES.cdc.veritas.com
 # Version: $Id: log.py,v 0.0 2010/07/08 04:32:27 julian Exp $
-# Keywords: 
+# Keywords:
 
 """
 <log.config>
@@ -38,38 +38,38 @@ import os
 class CrawlLog(object):
     """
     """
-    
+
     def __init__(self, cfgfile):
         logging.config.fileConfig(cfgfile)
-	self.mylogger = logging.getLogger()
+        self.mylogger = logging.getLogger()
 
     def __init__(self):
-	self.mylogger = logging.getLogger()
-	hdlr = logging.FileHandler('crawl.log')
+        self.mylogger = logging.getLogger()
+        hdlr = logging.FileHandler('whisper.log')
         formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
-	hdlr.setFormatter(formatter)
-	self.mylogger.addHandler(hdlr)
-	self.mylogger.setLevel(logging.NOTSET)
+        hdlr.setFormatter(formatter)
+        self.mylogger.addHandler(hdlr)
+        self.mylogger.setLevel(logging.NOTSET)
 
     def debug(self, msg, *args, **kwargs):
-	self.mylogger.debug(self._add_module_line(msg), *args, **kwargs)
+        self.mylogger.debug(self._add_module_line(msg), *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
-	self.mylogger.info(self._add_module_line(msg), *args, **kwargs)
+        self.mylogger.info(self._add_module_line(msg), *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
-	self.mylogger.warning(self._add_module_line(msg), *args, **kwargs)
+        self.mylogger.warning(self._add_module_line(msg), *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-	self.mylogger.error(self._add_module_line(msg), *args, **kwargs)
-	
+        self.mylogger.error(self._add_module_line(msg), *args, **kwargs)
+
     def critical(self, msg, *args, **kwargs):
-	self.mylogger.critical(self._add_module_line(msg), *args, **kwargs)
-	
+        self.mylogger.critical(self._add_module_line(msg), *args, **kwargs)
+
     def _add_module_line(self, msg):
-	_, modulepath, line, _, _, _ = inspect.stack()[-1]
-	head, tail = os.path.split(modulepath)
-	return tail + ' (' + str(line) + '): ' + msg
+        _, modulepath, line, _, _, _ = inspect.stack()[-1]
+        head, tail = os.path.split(modulepath)
+        return tail + ' (' + str(line) + '): ' + msg
 
 logger = CrawlLog()
 
@@ -79,6 +79,6 @@ def main():
     logger.debug('Test Debug a = %s', a)
     logger.error('Test Error!')
     logger.info('info here')
-    
+
 if __name__ == "__main__":
-    main()    
+    main()
