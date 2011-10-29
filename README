@@ -4,3 +4,6 @@ Installation:
    instapaper login accounts.
 2. Run whisper.py in crontab.
 3. Run index.php as a web service.
+
+More:
+http://blog.jqian.net/kindle-hack.html

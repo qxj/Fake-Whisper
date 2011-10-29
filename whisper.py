@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Qian Julian 2011-10-29 01:19:49>
+# whisper.py --- Time-stamp: <Julian Qian 2011-10-29 22:22:46>
 # Copyright 2011 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
@@ -8,7 +8,7 @@
 
 import poplib, email, string, subprocess, os, time, sqlite3
 import urllib, urllib2, cookielib
-import ConfigParser, getopt, sys
+import ConfigParser, getopt, sys, random
 from log import logger
 
 WHISPER_PATH="/var/tmp/whisper/"
@@ -20,7 +20,7 @@ def whisper_path(filename):
     return os.path.join(WHISPER_PATH, filename)
 
 def unique_id(filename):
-    return time.strftime("%y%m%d%H%M%S")
+    return "%s%d" % (time.strftime("%y%m%d"), random.getrandbits(16))
 
 def kindlegen(filename):
     basename, ext = os.path.splitext(filename)
@@ -93,7 +93,7 @@ class MailParser(object):
                 if not partname:
                     if part.get_content_type() == 'text/html':
                         filename = title
-                        filetype = "html"
+                        filetype = ".html"
                 else:
                     filename, filetype = os.path.splitext(partname)
                 if filename:
@@ -105,15 +105,15 @@ class MailParser(object):
                             content = content.replace("<html>", "<body>").replace("</html>", "</body>")
                         fileid = unique_id(filename)
                         filesize = len(content)
-                        targetfile = fileid +"."+ filetype
+                        targetfile = fileid + filetype
                         fp = open(whisper_path(targetfile), 'wb')
                         fp.write(content)
                         fp.close()
                         # if html/epub but not pdf, transcode them to mobi format
-                        if filetype.lower() == "html" or filetype.lower == "epub":
+                        if filetype.lower() in (".html", ".epub"):
                             filesize = kindlegen(whisper_path(targetfile))
-                            filetype = "mobi"
-                        if filesize:
+                            filetype = ".mobi"
+                        if filesize and filetype in (".pdf", ".mobi"):
                             logger.info("restore file %s as %s.%s in sqlite." % (filename, fileid, filetype ))
                             self._db.put_file(fileid, filename, filetype, filesize, SOURCES["mail"])
                             count += 1
@@ -227,7 +227,7 @@ class FetchInstapaper(object):
                 fp.close()
                 fileid = unique_id(filename)
                 logger.info("instapaper save %s to %s.mobi." % (filename, fileid))
-                self._db.put_file(fileid, filename, "mobi", len(content), SOURCES["instapaper"])
+                self._db.put_file(fileid, filename, ".mobi", len(content), SOURCES["instapaper"])
 
     def run(self):
         if self.login():
