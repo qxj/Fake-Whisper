@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Julian Qian 2011-10-29 22:22:46>
+# whisper.py --- Time-stamp: <Julian Qian 2011-10-31 21:24:08>
 # Copyright 2011 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
@@ -221,7 +221,7 @@ class FetchInstapaper(object):
             #
             lastsize = self._db.last_size(SOURCES["instapaper"])
             if lastsize != len(content):
-                filename = "Instapaper-%s.mobi" % (time.strftime("%Y-%m-%d"))
+                filename = "Instapaper-%s" % (time.strftime("%Y-%m-%d"))
                 fp = open(whisper_path(filename), "wb")
                 fp.write(content)
                 fp.close()
