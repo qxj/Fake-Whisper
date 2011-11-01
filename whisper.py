@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Qian Julian 2011-11-01 23:08:29>
+# whisper.py --- Time-stamp: <Qian Julian 2011-11-01 23:18:30>
 # Copyright 2011 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
