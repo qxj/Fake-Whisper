@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Julian Qian 2011-10-29 22:22:46>
+# whisper.py --- Time-stamp: <Qian Julian 2011-11-01 23:08:29>
 # Copyright 2011 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
 
-
-import poplib, email, string, subprocess, os, time, sqlite3
-import urllib, urllib2, cookielib
+import imaplib, email, string, subprocess, os, time, sqlite3
+import urllib, urllib2, cookielib, socket
 import ConfigParser, getopt, sys, random
 from log import logger
 
@@ -81,7 +80,7 @@ class MailParser(object):
 
     def parse(self, message):
         # begin to parse message
-        mail = email.message_from_string(string.join(message, '\n'))
+        mail = email.message_from_string(message)
         header = email.Header.decode_header(mail.get('subject'))
         title, charset = header[0]
         logger.info("parse mail: %s" % (title))
@@ -135,20 +134,37 @@ class FetchMail(object):
         self._parser = MailParser()
 
     def run(self):
-        server = poplib.POP3_SSL('pop.gmail.com', '995')
-        server.user(self._user)
-        server.pass_(self._passwd)
-        msgCnt, msgSize = server.stat()
-        logger.info("retrieving message count: %d, size: %d" % (msgCnt, msgSize))
-        for i in range(msgCnt):
-            try:
-                hdr, message, octet = server.retr(i)
-                logger.info("retrieved message %d: %s" % (i, hdr))
-                count = self._parser.parse(message)
-                logger.info("parse message to %d parts." % count)
-            except poplib.error_proto, e:
-                logger.error("failed to retr message %d" % (i))
-        logger.info("fetch mail end.")
+        try:
+            server = imaplib.IMAP4_SSL('imap.gmail.com')
+            server.login(self._user, self._passwd)
+            result, dummy = server.select('INBOX')
+            if result != 'OK':
+                logger.info('failed to select INBOX of gmail')
+            else:
+                result, data = server.uid('search', None, 'UnSeen')
+                # date = (datetime.date.today() - datetime.timedelta(1)).strftime("%d-%b-%Y")
+                # result, data = mail.uid('search', None, '(SENTSINCE {date})'.format(date=date))
+
+                if result != 'OK':
+                    logger.info('failed to get messages')
+                else:
+                    uids = data[0].split()
+                    logger.info("retrieving message...")
+                    for uid in uids:
+                        result, msg = server.uid('fetch', uid, '(RFC822)')
+                        message = msg[0][1]
+                        logger.info("retrieved message %s" % (uid))
+                        count = self._parser.parse(message)
+                        logger.info("parse message to %d parts." % count)
+                    logger.info("fetch mail end.")
+                    server.store(data[0].replace(' ',','),'+FLAGS','Seen')
+                    logger.info("mark mail as seen.")
+                server.close()
+                server.logout()
+        except socket.error, e:
+            logger.error("error open imap connection.")
+        except imaplib.IMAP4.error, e:
+            logger.error("error during imap connection")
 
 
     # attachment
@@ -221,7 +237,7 @@ class FetchInstapaper(object):
             #
             lastsize = self._db.last_size(SOURCES["instapaper"])
             if lastsize != len(content):
-                filename = "Instapaper-%s.mobi" % (time.strftime("%Y-%m-%d"))
+                filename = "Instapaper-%s" % (time.strftime("%Y-%m-%d"))
                 fp = open(whisper_path(filename), "wb")
                 fp.write(content)
                 fp.close()
