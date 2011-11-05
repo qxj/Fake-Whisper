@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Qian Julian 2011-11-01 23:18:30>
+# whisper.py --- Time-stamp: <Qian Julian 2011-11-05 17:20:36>
 # Copyright 2011 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
@@ -261,6 +261,9 @@ def main():
     if not os.path.exists(KINDLEGEN_PATH):
         print "kindlegen can't be found."
         sys.exit(1)
+
+    if not os.path.exists(WHISPER_PATH):
+        os.makedirs(WHISPER_PATH)
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "gi", ["gmail", "instapaper"])

@@ -1,9 +1,27 @@
 Installation:
 
 1. Rename whisper.conf.sample to whisper.conf, and setup gmail and
-   instapaper login accounts.
-2. Run whisper.py in crontab.
-3. Run index.php as a web service.
+   instapaper login accounts. You can put whisper.conf in the same
+   directory as whisper.py.
+
+   sqlite database is stored defaultly as /var/tmp/whisper.db.
+
+   mobi documents are stored defaultly under the directory
+   /var/tmp/whisper/.
+
+   Make sure kindlegen is already installed under /usr/local/bin/kindlegen.
+
+2. Run whisper.py in crontab, and . Suggest to setup
+   crontab to fetch gmail every one or shorter than one hour; and fetch
+   instapaper every day, because instapaper will generate mobi for
+   kindle every day. E.g.:
+
+   $ crontab -e
+   # m h  dom mon dow   command
+   0   *   *   *   *   $HOME/Fake-Whisper/whisper.py -g 2>&1 >> $HOME/whisper.log
+   0   1   *   *   *   $HOME/Fake-Whisper/whisper.py -i 2>&1 >> $HOME/whisper.log
+
+3. Install apache and php, run index.php as a web service in somewhere.
 
 More:
 http://blog.jqian.net/kindle-hack.html
