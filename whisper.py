@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Qian Julian 2011-11-05 17:20:36>
+# whisper.py --- Time-stamp: <Qian Julian 2011-11-08 21:46:33>
 # Copyright 2011 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
@@ -139,15 +139,15 @@ class FetchMail(object):
             server.login(self._user, self._passwd)
             result, dummy = server.select('INBOX')
             if result != 'OK':
-                logger.info('failed to select INBOX of gmail')
+                logger.error('failed to select INBOX of gmail')
             else:
                 result, data = server.uid('search', None, 'UnSeen')
                 # date = (datetime.date.today() - datetime.timedelta(1)).strftime("%d-%b-%Y")
                 # result, data = mail.uid('search', None, '(SENTSINCE {date})'.format(date=date))
 
                 if result != 'OK':
-                    logger.info('failed to get messages')
-                else:
+                    logger.error('failed to get messages')
+                elif not data:
                     uids = data[0].split()
                     logger.info("retrieving message...")
                     for uid in uids:
@@ -256,7 +256,6 @@ def main():
     Fake whispernet
     """
     config = ConfigParser.ConfigParser()
-    config.read("whisper.conf")
 
     if not os.path.exists(KINDLEGEN_PATH):
         print "kindlegen can't be found."
@@ -266,22 +265,36 @@ def main():
         os.makedirs(WHISPER_PATH)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "gi", ["gmail", "instapaper"])
+        opts, args = getopt.getopt(sys.argv[1:], "c:gi", ["conf", "gmail", "instapaper"])
     except getopt.GetoptError, e:
         print e
         sys.exit(2)
     if opts:
         for o, a in opts:
+            if o in ("-c", "--conf"):
+                config.read(a)
+                print "read setting file %s" % (a)
+                break
+        else:
+            config.read("whisper.conf")
+            print "no whisper.conf is specified, apply the default."
+        for o, a in opts:
             if o in ("-g", "--gmail"):
-                fmail = FetchMail(config.get('GMAIL', 'USERNAME'),
-                                  config.get('GMAIL', 'PASSWORD'))
-                fmail.run()
+                try:
+                    fmail = FetchMail(config.get('GMAIL', 'USERNAME'),
+                                      config.get('GMAIL', 'PASSWORD'))
+                    fmail.run()
+                except ConfigParser.Error, e:
+                    print "failed to get gmail setting!"
+                    sys.exit(2)
             elif o in ("-i", "--instapaper"):
-                finst = FetchInstapaper(config.get('INSTAPAPER', 'USERNAME'),
-                                        config.get('INSTAPAPER', 'PASSWORD'))
-                finst.run()
-            else:
-                print "wrong arguments."
+                try:
+                    finst = FetchInstapaper(config.get('INSTAPAPER', 'USERNAME'),
+                                            config.get('INSTAPAPER', 'PASSWORD'))
+                    finst.run()
+                except ConfigParser.Error, e:
+                    print "failed to get instapaper setting!"
+                    sys.exit(2)
 
 if __name__ == "__main__":
     main()
