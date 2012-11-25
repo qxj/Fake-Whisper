@@ -1,19 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# whisper.py --- Time-stamp: <Qian Julian 2011-11-08 21:46:33>
-# Copyright 2011 Julian Qian
+# whisper.py --- Time-stamp: <Julian Qian 2012-11-25 12:13:40>
+# Copyright 2011, 2012 Julian Qian
 # Author: junist@gmail.com
 # Version: $Id: whisper.py,v 0.0 2011/08/15 06:10:33 jqian Exp $
 
-import imaplib, email, string, subprocess, os, time, sqlite3
+import imaplib, email, string, subprocess, os, time, sqlite3, logging
 import urllib, urllib2, cookielib, socket
 import ConfigParser, getopt, sys, random
-from log import logger
 
 WHISPER_PATH="/var/tmp/whisper/"
 KINDLEGEN_PATH="/usr/local/bin/kindlegen"
 
 SOURCES = {"mail":1, "instapaper":2}
+
+def getLogger():
+    logger = logging.getLogger('whisper')
+    logger.setLevel(logging.DEBUG)
+    ## append to file
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    # fh = logging.FileHandler('whisper.log')
+    # fh.setLevel(logging.DEBUG)
+    # fh.setFormatter(formatter)
+    # logger.addHandler(fh)
+    ## append to sys.stderr
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    return logger
+
+logger = getLogger()
 
 def whisper_path(filename):
     return os.path.join(WHISPER_PATH, filename)
@@ -41,14 +58,22 @@ class WhisperDb(object):
     def __init__(self, dbfile = '/var/tmp/whisper.db'):
         is_init = False
         if os.path.isfile(dbfile) and os.path.exists(dbfile):
-            is_init = True
+            conn = sqlite3.connect(dbfile)
+            c = conn.cursor()
+            try:
+                c.execute("select * from files limit 1")
+                is_init = True
+            except:
+                pass
+            c.close()
+            conn.close()
         else:
             open(dbfile, "w").close()
 
         self.conn = sqlite3.connect(dbfile)
         if not is_init:         # init database
             c = self.conn.cursor()
-            c.execute("create table files (fileid text, filename text, filetype text, filesize integer, source integer, timestamp integer, downloaded integer)")       # file is primary key
+            c.execute("create table files (fileid text, filename text, filetype text, filesize integer, source integer, timestamp integer, downloaded integer)")       # fileid is primary key
             self.conn.commit()
             c.close()
 
@@ -83,6 +108,10 @@ class MailParser(object):
         mail = email.message_from_string(message)
         header = email.Header.decode_header(mail.get('subject'))
         title, charset = header[0]
+        try:
+            title = title.decode(charset, "ignore")
+        except:
+            logger.error("failed to decode %s with %s" % (title, charset))
         logger.info("parse mail: %s" % (title))
         count = 0
         for part in mail.walk():
@@ -95,6 +124,8 @@ class MailParser(object):
                         filetype = ".html"
                 else:
                     filename, filetype = os.path.splitext(partname)
+                    # FIXME: gbk encoding partname
+                    filetype = filetype.replace("?=", "")
                 if filename:
                     content = part.get_payload(decode=True)
                     if content:
@@ -147,7 +178,7 @@ class FetchMail(object):
 
                 if result != 'OK':
                     logger.error('failed to get messages')
-                elif not data:
+                elif data:
                     uids = data[0].split()
                     logger.info("retrieving message...")
                     for uid in uids:
@@ -165,7 +196,6 @@ class FetchMail(object):
             logger.error("error open imap connection.")
         except imaplib.IMAP4.error, e:
             logger.error("error during imap connection")
-
 
     # attachment
     # 1. parts = mail.get_payloads() or
@@ -238,12 +268,14 @@ class FetchInstapaper(object):
             lastsize = self._db.last_size(SOURCES["instapaper"])
             if lastsize != len(content):
                 filename = "Instapaper-%s" % (time.strftime("%Y-%m-%d"))
-                fp = open(whisper_path(filename), "wb")
+                filetype = ".mobi"
+                fileid = unique_id(filename)
+                targetfile = fileid + filetype
+                fp = open(whisper_path(targetfile), "wb")
                 fp.write(content)
                 fp.close()
-                fileid = unique_id(filename)
-                logger.info("instapaper save %s to %s.mobi." % (filename, fileid))
-                self._db.put_file(fileid, filename, ".mobi", len(content), SOURCES["instapaper"])
+                logger.info("instapaper save %s to %s." % (filename, targetfile))
+                self._db.put_file(fileid, filename, filetype, len(content), SOURCES["instapaper"])
 
     def run(self):
         if self.login():
@@ -276,21 +308,26 @@ def main():
                 print "read setting file %s" % (a)
                 break
         else:
-            config.read("whisper.conf")
-            print "no whisper.conf is specified, apply the default."
+            conf = os.path.dirname(sys.argv[0]) + "/whisper.conf"
+            config.read(conf)
+            print "no whisper.conf is specified, apply the default: %s." % conf
         for o, a in opts:
             if o in ("-g", "--gmail"):
                 try:
-                    fmail = FetchMail(config.get('GMAIL', 'USERNAME'),
-                                      config.get('GMAIL', 'PASSWORD'))
+                    u = config.get('GMAIL', 'USERNAME')
+                    p = config.get('GMAIL', 'PASSWORD')
+                    print "fetching gmail account %s" % u
+                    fmail = FetchMail(u, p)
                     fmail.run()
                 except ConfigParser.Error, e:
                     print "failed to get gmail setting!"
                     sys.exit(2)
             elif o in ("-i", "--instapaper"):
                 try:
-                    finst = FetchInstapaper(config.get('INSTAPAPER', 'USERNAME'),
-                                            config.get('INSTAPAPER', 'PASSWORD'))
+                    u = config.get('INSTAPAPER', 'USERNAME')
+                    p = config.get('INSTAPAPER', 'PASSWORD')
+                    print "fetching instapaper account %s" % u
+                    finst = FetchInstapaper(u, p)
                     finst.run()
                 except ConfigParser.Error, e:
                     print "failed to get instapaper setting!"
